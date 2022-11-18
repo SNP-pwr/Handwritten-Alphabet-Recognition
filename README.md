@@ -1,1 +1,1 @@
-# HandwrittenAlphabetRecognition
+# Handwritten Alphabet Recognition System
