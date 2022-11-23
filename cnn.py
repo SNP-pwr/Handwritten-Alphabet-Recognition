@@ -124,7 +124,7 @@ def loadModel(modelPath):
                     metrics=['accuracy'])
 
 def prepareSample():
-    path = os.path.join(appFolder, "saved_files/")
+    path = os.path.join(appFolder, "saved_files/image.png")
     try:
         imgArray = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         newArray = cv2.resize(imgArray, (28, 28))
