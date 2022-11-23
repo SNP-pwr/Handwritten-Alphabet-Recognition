@@ -6,6 +6,8 @@ import random
 import tkinter as tk
 from tkinter import filedialog as fd
 
+from cnn import *
+
 class Game(object):
 
 
@@ -159,15 +161,15 @@ class Game(object):
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.buttons[0].collidepoint(event.pos):
-                        # fd.askopenfile()
-                        self.datasetDir = fd.askdirectory(initialdir=self.appFolder)
+                        fd.askopenfile()
+                        self.datasetDir = fd.askopenfile(title='Select dataset', initialdir=self.appFolder, filetypes=[('csv file', '.csv')])
                         print(self.datasetDir)
 
                     if self.buttons[1].collidepoint(event.pos):
                         try:
-                            # model = buildModelT(self.datasetDir)
+                            #model = buildModelT(self.datasetDir)
                             modelPath = tk.filedialog.askopenfile(title='Open model file', initialdir=self.appFolder, filetypes=[('json file', '.json')])
-                            #loadModel(modelPath.name) #### -------------- #####
+                            loadModel(modelPath.name) #### -------------- #####
                             self.modelLoaded = True
                         except:
                             print("error: File not selected.")
@@ -175,13 +177,13 @@ class Game(object):
                     if self.buttons[2].collidepoint(event.pos) and self.buttonActive[2]:
                         # model = buildModelT(self.datasetDir)
                         testSize = 0.1
-                        #train_X, train_y, test_X, test_y = createDataSet(self.datasetDir, testSize) #### -------------- #####
-                        #if self.debugMode:
-                        #    print("train_X shape: " + str(np.shape(train_X)))
-                        #    print("train_y shape: " + str(np.shape(train_y)))
-                        #    print("test_X shape: " + str(np.shape(test_X)))
-                        #    print("test_y shape: " + str(np.shape(test_y)))
-                        # trainModel(train_X, train_y, test_X, test_y, self.datasetDir) #### -------------- #####
+                        train_X, train_y, test_X, test_y = createDataSet(self.datasetDir, testSize) #### -------------- #####
+                        if self.debugMode:
+                           print("train_X shape: " + str(np.shape(train_X)))
+                           print("train_y shape: " + str(np.shape(train_y)))
+                           print("test_X shape: " + str(np.shape(test_X)))
+                           print("test_y shape: " + str(np.shape(test_y)))
+                        trainModel(train_X, train_y, test_X, test_y, self.datasetDir) #### -------------- #####
                         self.trained = True
 
                     if self.buttons[3].collidepoint(event.pos) and self.buttonActive[3]:
