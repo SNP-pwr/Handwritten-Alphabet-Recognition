@@ -7,9 +7,13 @@ import tkinter as tk
 from tkinter import filedialog as fd
 
 from cnn import *
+import cnn
 
 class Game(object):
 
+    def Log(self, info):
+        text = self.font.render(info, True, (126, 150, 189))
+        self.screen.blit(text, (self.w-self.uiw + 5, self.h - 150))
 
     def __init__(self):
         #config
@@ -26,6 +30,8 @@ class Game(object):
         self.session = random.randint(1, 1000)
         
         self.debugMode = True
+
+        self.logText = "None"
 
         #initialization
         pygame.init()
@@ -158,24 +164,39 @@ class Game(object):
                     filename = "image"
                     pygame.image.save(sub, os.path.join(self.appFolder, "saved_files/") + filename + '.png')
                     sys.exit(0)
-
+                    
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.buttons[0].collidepoint(event.pos):
-                        fd.askopenfile()
+                        self.logText = "Loading dataset ..."
+                        self.Log("Loading dataset ...")
                         self.datasetDir = fd.askopenfile(title='Select dataset', initialdir=self.appFolder, filetypes=[('csv file', '.csv')])
                         print(self.datasetDir)
+                        if(self.datasetDir != None):
+                            self.logText = "Dataset loaded"
+                            self.Log("Dataset loaded")
+                        else:
+                            self.logText = "No file selected"
+                            self.Log("No file selected")
 
                     if self.buttons[1].collidepoint(event.pos):
                         try:
                             #model = buildModelT(self.datasetDir)
+                            self.logText = "Loading model ..."
+                            self.Log("Loading model ...")
                             modelPath = tk.filedialog.askopenfile(title='Open model file', initialdir=self.appFolder, filetypes=[('json file', '.json')])
-                            loadModel(modelPath.name) #### -------------- #####
+                            loadModel(modelPath.name)
                             self.modelLoaded = True
+                            self.logText = "Model loaded"
+                            self.Log("Model loaded")
                         except:
                             print("error: File not selected.")
+                            self.logText = "File not selected"
+                            self.Log("File not selected")
 
                     if self.buttons[2].collidepoint(event.pos) and self.buttonActive[2]:
                         # model = buildModelT(self.datasetDir)
+                        self.logText = "Preparing dataset..."
+                        self.Log("Preparing dataset...")
                         testSize = 0.1
                         train_X, train_y, test_X, test_y = createDataSet(self.datasetDir, testSize) #### -------------- #####
                         if self.debugMode:
@@ -183,8 +204,12 @@ class Game(object):
                            print("train_y shape: " + str(np.shape(train_y)))
                            print("test_X shape: " + str(np.shape(test_X)))
                            print("test_y shape: " + str(np.shape(test_y)))
+                        self.logText = "Dataset ready. Model training ongoing..."
+                        self.Log("Dataset ready. Model training ongoing...")
                         trainModel(train_X, train_y, test_X, test_y, self.datasetDir) #### -------------- #####
                         self.trained = True
+                        self.logText = "Model ready"
+                        self.Log("Model ready")
 
                     if self.buttons[3].collidepoint(event.pos) and self.buttonActive[3]:
                         for i in range(self.texturSize):
@@ -262,6 +287,7 @@ class Game(object):
 
                                 filename = "image"
                                 pygame.image.save(sub, os.path.join(self.appFolder, "saved_files/") + filename + '.png')
+                                predict()
                             
             if(tbactive):
                 pygame.draw.rect(self.screen, (146, 146, 178), textBox, width=2)
@@ -295,6 +321,7 @@ class Game(object):
             #for i in self.textures:
             pygame.draw.rect(self.screen, self.textureBorderColor, self.textures[0], width=1)
             
+            self.Log(self.logText)
 
             pygame.display.flip()
 
