@@ -1,10 +1,11 @@
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout, Flatten, Conv2D, MaxPooling2D
+import tensorflow as tf
 from keras  import layers
 import keras
 import numpy as np
 import cv2
-import os, shutil, datetime
+import os, shutil, datetime, sys, time
 import random
 from keras.models import model_from_json
 from collections import Counter
@@ -24,6 +25,19 @@ train_y = []
 test_X = []
 test_y = []
 
+ready = False
+word_dict = {0:'A',1:'B',2:'C',3:'D',4:'E',5:'F',6:'G',7:'H',8:'I',9:'J',10:'K',11:'L',12:'M',13:'N',14:'O',15:'P',16:'Q',17:'R',18:'S',19:'T',20:'U',21:'V',22:'W',23:'X', 24:'Y',25:'Z'}
+
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '|' * filled_len + '.' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s%s%s%s ...%s\r' % (bar, percents, '%  ', count, "/", total,  status))
+    sys.stdout.flush()
+
 def mostFrequent(List):
     occurence_count = Counter(List)
     return occurence_count.most_common(1)[0][0]
@@ -36,17 +50,17 @@ def createDataSet(dat, t):
     test_X = []
     test_y = []
 
-    df = pd.read_csv(dat)
+    data = pd.read_csv(dat).astype('float32')
 
     class_mapping = {}
-    alphabets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    for i in range(len(alphabets)):
-        class_mapping[i] = alphabets[i]
 
-    df['class'].map(class_mapping).unique()
+    X = data.drop('0',axis = 1) # axis=1 for dropping column
+    y = data['0']
+    X.head()
+    y.head()
 
-    y_full = df.pop('class')
-    x_full = df.to_numpy().reshape(-1,28,28, 1)
+    y_full = y
+    x_full = X.to_numpy().reshape(-1,28,28, 1)
 
     splitter = StratifiedShuffleSplit(n_splits=3,test_size=0.2)
     for train_ids, test_ids in splitter.split(x_full, y_full):
@@ -62,14 +76,21 @@ def buildModel(dat):
     
     model = Sequential()
 
-    # model.add(Conv2D(64, (5, 5), activation='relu'))
-    # model.add(Conv2D(64, (5, 5), activation='relu'))
-    # model.add(MaxPooling2D(2,2))
-    # model.add(Conv2D(64, (5, 5), activation='relu'))
-    # model.add(Dropout(0.5))
-    # model.add(Flatten())
-    # model.add(Dense(512, activation='relu'))
-    # model.add(Dense(len(classes), activation='softmax'))
+    model.add(Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(28,28,1)))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
+
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding = 'same'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
+
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding = 'valid'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
+
+    model.add(Flatten())
+
+    model.add(Dense(64,activation ="relu"))
+    model.add(Dense(128,activation ="relu"))
+
+    model.add(Dense(26,activation ="softmax"))
 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-2),
                 loss=keras.losses.SparseCategoricalCrossentropy(),
@@ -83,10 +104,22 @@ def trainModel(train_X, train_y, test_X, test_y, dat):
 
     model = buildModel(dat)
 
+    imageAug = Sequential([
+        layers.RandomFlip("vertical"),
+        layers.RandomZoom(height_factor=(-0.2, 0.2), width_factor=(-0.2, 0.2)),
+        layers.RandomRotation(0.3)])
+
     logdir = os.path.join(appFolder, "logs-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
-    model.fit(train_X, train_y, epochs=20, batch_size=64, callbacks=[tensorboard_callback])
+    total = len(train_X)
+ 
+    for i in range(total):
+        progress(i, total, status='Image augumentation ongoing...')
+        train_X[i] = imageAug(train_X[i])
+    print("\n")
+
+    model.fit(train_X, train_y, epochs=50, batch_size=2048, callbacks=[tensorboard_callback])
 
     model.evaluate(test_X, test_y, batch_size=5)
     p = model.predict(test_X)
@@ -97,7 +130,7 @@ def trainModel(train_X, train_y, test_X, test_y, dat):
     # print(np.argmax(p))
     for i in p:
         cl.append(np.argmax(i))
-    conf_mat = keras.math.confusion_matrix(test_y, cl, num_classes=len(classes))
+    conf_mat = tf.math.confusion_matrix(test_y, cl, num_classes=len(word_dict))
     # conf_mat = tf.math.confusion_matrix(test_y, model.predict_classes(test_X), num_classes=len(classes))
     print(conf_mat)
 
@@ -107,6 +140,7 @@ def trainModel(train_X, train_y, test_X, test_y, dat):
     # serialize weights to HDF5
     model.save_weights("modelTest2.h5")      #dawne model
     print("Saved model to disk")
+    ready = True
 
 
 def loadModel(modelPath):
@@ -115,13 +149,14 @@ def loadModel(modelPath):
     loaded_model_json = json_file.read()
     json_file.close()
     model = model_from_json(loaded_model_json)
-    # load weights into new model
-    model.load_weights("model.h5")
+    #load weights into new model
+    model.load_weights("modelTest2.h5")
     print("Loaded model from disk")
 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
                     loss=keras.losses.SparseCategoricalCrossentropy(),
                     metrics=['accuracy'])
+    ready = True
 
 def prepareSample():
     path = os.path.join(appFolder, "saved_files/image.png")
@@ -135,13 +170,14 @@ def prepareSample():
     sample = sample/255.0
     return sample
 
-def predict(new_X, dat):
-    classes = os.listdir(dat)
+def predict():
+    new_X = prepareSample()
     # pred_y = model.predict_classes(new_X)
     pred = model.predict(new_X)
     #print(pred_y)
     # print(classes[pred_y[0]])
     print(max(pred[0]))
     print(pred[0])
+    print(word_dict[np.argmax(pred[0])])
     # return classes[pred_y[0]]
-    return classes[np.argmax(pred[0])]
+    return word_dict[np.argmax(pred[0])]
