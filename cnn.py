@@ -11,6 +11,7 @@ from keras.models import model_from_json
 from collections import Counter
 import pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
+from imblearn.under_sampling import NearMiss
 
 
 appFolder = os.path.dirname(os.path.abspath(__file__))
@@ -59,6 +60,9 @@ def createDataSet(dat, t):
     X.head()
     y.head()
 
+    nM = NearMiss()
+    X, y = nM.fit_resample(X, y)
+
     y_full = y
     x_full = X.to_numpy().reshape(-1,28,28, 1)
 
@@ -80,15 +84,19 @@ def buildModel(dat):
     model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
 
     model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', padding = 'same'))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
+    # model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
 
-    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding = 'valid'))
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding = 'same'))
+    # model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
+    model.add(Dropout(0.2))
+    model.add(Conv2D(filters=256, kernel_size=(3, 3), activation='relu', padding = 'same'))
     model.add(MaxPooling2D(pool_size=(2, 2), strides=2))
 
     model.add(Flatten())
 
-    model.add(Dense(64,activation ="relu"))
     model.add(Dense(128,activation ="relu"))
+    model.add(Dropout(0.2))
+    model.add(Dense(256,activation ="relu"))
 
     model.add(Dense(26,activation ="softmax"))
 
@@ -105,7 +113,7 @@ def trainModel(train_X, train_y, test_X, test_y, dat):
     model = buildModel(dat)
 
     imageAug = Sequential([
-        layers.RandomFlip("vertical"),
+        #layers.RandomFlip("vertical"),
         layers.RandomZoom(height_factor=(-0.2, 0.2), width_factor=(-0.2, 0.2)),
         layers.RandomRotation(0.3)])
 
@@ -114,12 +122,12 @@ def trainModel(train_X, train_y, test_X, test_y, dat):
 
     total = len(train_X)
  
-    for i in range(total):
-        progress(i, total, status='Image augumentation ongoing...')
-        train_X[i] = imageAug(train_X[i])
-    print("\n")
+    # for i in range(total):
+    #     progress(i, total, status='Image augumentation ongoing...')
+    #     train_X[i] = imageAug(train_X[i])
+    # print("\n")
 
-    model.fit(train_X, train_y, epochs=50, batch_size=2048, callbacks=[tensorboard_callback])
+    model.fit(train_X, train_y, epochs=10, batch_size=128, callbacks=[tensorboard_callback])
 
     model.evaluate(test_X, test_y, batch_size=5)
     p = model.predict(test_X)

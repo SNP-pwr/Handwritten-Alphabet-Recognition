@@ -260,30 +260,30 @@ class Game(object):
                                 self.texture[i][j][1] = [255, 255, 255]
                                 self.texture[i][j][2] = 0
 
-                                if (i > 0):
-                                    if (self.texture[i-1][j][1][0] < 215):
-                                        for c in range(3):
-                                            self.texture[i-1][j][1][c] += 40
-                                    else:
-                                        self.texture[i-1][j][1] = [255, 255, 255]
-                                if (j > 0):
-                                    if (self.texture[i][j-1][1][0] < 215):
-                                        for c in range(3):
-                                            self.texture[i][j-1][1][c] += 40
-                                    else:
-                                        self.texture[i][j-1][1] = [255, 255, 255]
-                                if (i < self.texturSize - 1):
-                                    if (self.texture[i+1][j][1][0] < 215):
-                                        for c in range(3):
-                                            self.texture[i+1][j][1][c] += 40
-                                    else:
-                                        self.texture[i+1][j][1] = [255, 255, 255]
-                                if (j < self.texturSize - 1):
-                                    if (self.texture[i][j+1][1][0] < 215):
-                                        for c in range(3):
-                                            self.texture[i][j+1][1][c] += 40
-                                    else:
-                                        self.texture[i][j+1][1] = [255, 255, 255]
+                                # if (i > 0):
+                                #     if (self.texture[i-1][j][1][0] < 215):
+                                #         for c in range(3):
+                                #             self.texture[i-1][j][1][c] += 40
+                                #     else:
+                                #         self.texture[i-1][j][1] = [255, 255, 255]
+                                # if (j > 0):
+                                #     if (self.texture[i][j-1][1][0] < 215):
+                                #         for c in range(3):
+                                #             self.texture[i][j-1][1][c] += 40
+                                #     else:
+                                #         self.texture[i][j-1][1] = [255, 255, 255]
+                                # if (i < self.texturSize - 1):
+                                #     if (self.texture[i+1][j][1][0] < 215):
+                                #         for c in range(3):
+                                #             self.texture[i+1][j][1][c] += 40
+                                #     else:
+                                #         self.texture[i+1][j][1] = [255, 255, 255]
+                                # if (j < self.texturSize - 1):
+                                #     if (self.texture[i][j+1][1][0] < 215):
+                                #         for c in range(3):
+                                #             self.texture[i][j+1][1][c] += 40
+                                #     else:
+                                #         self.texture[i][j+1][1] = [255, 255, 255]
 
                                 filename = "image"
                                 pygame.image.save(sub, os.path.join(self.appFolder, "saved_files/") + filename + '.png')
