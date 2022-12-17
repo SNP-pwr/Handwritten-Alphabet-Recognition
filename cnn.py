@@ -158,7 +158,7 @@ def loadModel(modelPath):
     json_file.close()
     model = model_from_json(loaded_model_json)
     #load weights into new model
-    model.load_weights("modelTest2.h5")
+    model.load_weights(modelPath.split(".")[0] + ".h5")
     print("Loaded model from disk")
 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
@@ -175,7 +175,7 @@ def prepareSample():
         print('---------ERROR---------')
 
     sample = np.array(newArray).reshape(-1, imgSize, imgSize, 1)
-    sample = sample/255.0
+    # sample = sample/255.0
     return sample
 
 def predict():
@@ -184,8 +184,8 @@ def predict():
     pred = model.predict(new_X)
     #print(pred_y)
     # print(classes[pred_y[0]])
-    print(max(pred[0]))
-    print(pred[0])
-    print(word_dict[np.argmax(pred[0])])
+    # print(max(pred[0]))
+    # print(pred[0])
+    # print(word_dict[np.argmax(pred[0])])
     # return classes[pred_y[0]]
-    return word_dict[np.argmax(pred[0])]
+    return pred[0] #word_dict[np.argmax(pred[0])]

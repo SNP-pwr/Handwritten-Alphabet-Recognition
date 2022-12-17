@@ -72,10 +72,10 @@ class Game(object):
         self.classes = []
 
         #Prediction result
-        self.numberOfBest = 10
-        predBox = pygame.Rect(self.textureSizeOnCanvas + 40, 20, 150, 35*self.numberOfBest)
+        self.numberOfBest = 5
+        self.predBox = pygame.Rect(self.textureSizeOnCanvas + 40, 20, 150, 35*self.numberOfBest)
 
-        
+        self.bestPreds = []
 
         ##################################
 
@@ -259,35 +259,22 @@ class Game(object):
                                 
                                 self.texture[i][j][1] = [255, 255, 255]
                                 self.texture[i][j][2] = 0
-
-                                # if (i > 0):
-                                #     if (self.texture[i-1][j][1][0] < 215):
-                                #         for c in range(3):
-                                #             self.texture[i-1][j][1][c] += 40
-                                #     else:
-                                #         self.texture[i-1][j][1] = [255, 255, 255]
-                                # if (j > 0):
-                                #     if (self.texture[i][j-1][1][0] < 215):
-                                #         for c in range(3):
-                                #             self.texture[i][j-1][1][c] += 40
-                                #     else:
-                                #         self.texture[i][j-1][1] = [255, 255, 255]
-                                # if (i < self.texturSize - 1):
-                                #     if (self.texture[i+1][j][1][0] < 215):
-                                #         for c in range(3):
-                                #             self.texture[i+1][j][1][c] += 40
-                                #     else:
-                                #         self.texture[i+1][j][1] = [255, 255, 255]
-                                # if (j < self.texturSize - 1):
-                                #     if (self.texture[i][j+1][1][0] < 215):
-                                #         for c in range(3):
-                                #             self.texture[i][j+1][1][c] += 40
-                                #     else:
-                                #         self.texture[i][j+1][1] = [255, 255, 255]
+                                self.texture[i+1][j][1] = [255, 255, 255]
+                                self.texture[i+1][j][2] = 0
+                                self.texture[i][j+1][1] = [255, 255, 255]
+                                self.texture[i][j+1][2] = 0
+                                self.texture[i+1][j+1][1] = [255, 255, 255]
+                                self.texture[i+1][j+1][2] = 0
 
                                 filename = "image"
                                 pygame.image.save(sub, os.path.join(self.appFolder, "saved_files/") + filename + '.png')
-                                predict()
+                                preds = predict()
+                                indexed = list(enumerate(preds))
+                                s = sorted(indexed, key=lambda l:l[1], reverse=True)
+                                self.bestPreds = []
+                                for i in range(self.numberOfBest):
+                                    self.bestPreds.append([word_dict[s[i][0]] , s[i][1]])
+
                             
             if(tbactive):
                 pygame.draw.rect(self.screen, (146, 146, 178), textBox, width=2)
@@ -306,12 +293,17 @@ class Game(object):
                 text = self.font.render(self.texts[i], True, self.colors[i])
                 self.screen.blit(text, (self.buttons[i].x+self.buttons[i].width/2-text.get_width()/2, self.buttons[i].y))
 
-            pygame.draw.rect(self.screen, self.baseColor, predBox, width=2)
-            if (len(self.supportVector) > 0):
-                sortedSupport = self.supportVector.sort(reverse=True)
-                for i in range(self.numberOfBest):
-                    text = self.font.render(self.classes[self.supportVector.index(sortedSupport[i])] + sortedSupport[i], True, self.colors[i])
-                    self.screen.blit(text, (self.textureSizeOnCanvas + 50, 25*i))
+            pygame.draw.rect(self.screen, self.baseColor, self.predBox, width=2)
+            if(len(self.bestPreds) > 0):
+                for m in range(self.numberOfBest):
+                    text = self.font.render(self.bestPreds[m][0] + " - " + str(round(self.bestPreds[m][1]*100)) + "%", True, self.baseColor)
+                    self.screen.blit(text, (self.predBox[0]+5, self.predBox[1]+5 + 25*m))
+
+            # if (len(self.supportVector) > 0):
+            #     sortedSupport = self.supportVector.sort(reverse=True)
+            #     for i in range(self.numberOfBest):
+            #         text = self.font.render(self.classes[self.supportVector.index(sortedSupport[i])] + sortedSupport[i], True, self.colors[i])
+            #         self.screen.blit(text, (self.textureSizeOnCanvas + 50, 25*i))
 
             for k in range(self.texturSize):
                 for l in range(self.texturSize):
